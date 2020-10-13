@@ -1,8 +1,10 @@
 import sys
 import os
+import shutil
 from collections import OrderedDict
 
 from equilibrium_price import calculate_equilibriums
+from graphing_tool import create_graphs
 from utilities import create_dir
 from trade_splitter import split_trades
 
@@ -11,24 +13,31 @@ headers = ['account', 'email', 'owner', 'marketplace', 'session', 'period', 'mar
                  'lastModifiedDate', 'clientDescription']
 try:
     file = str(sys.argv[1])
-    letters = sys.argv[2:]
+    symbols = sys.argv[2:]
 except:
-    # todo: not allowed in production
-    file = "../Transaction Data/modify.csv"
-    letters = ['A','B']
+    symbols = ['A','B']
     print("unexpected arguement")
 
-symbols = OrderedDict()
-print(file)
-name = file.split('/')[-1]
-print(name)
+num_symbols = OrderedDict()
 file = os.path.abspath(file)
+name = os.path.basename(file)
+
+print("file name " + name)
+print("file path " +file)
+print("file dir " + os.path.dirname(file))
 directory = os.path.dirname(file) + os.sep + name + '.dir'
+print("will make dir here: " + directory)
+
+if os.path.isdir(directory):
+    # delete old dir
+    shutil.rmtree(directory)
+    create_dir(directory)
+
 create_dir(directory)
-print(directory)
 
-print("calling trade_splitter from controller")
-symbol_dict = split_trades(directory,file,letters,symbols,headers)
-print("calling calculate equilibrium from controller")
-calculate_equilibriums(directory,file,letters,symbol_dict,headers)
-
+print("splitting transactions...")
+symbol_dict = split_trades(directory,file,symbols,num_symbols,headers)
+print("calculating equilibrium...")
+rolls = calculate_equilibriums(directory,file,symbols,symbol_dict,headers)
+print("creating graphs...")
+create_graphs(directory,headers,symbols,rolls)

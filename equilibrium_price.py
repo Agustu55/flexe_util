@@ -2,6 +2,7 @@
 ## this tool also produces the trading agents which is useful for color coordinated graphing
 import csv
 import os
+import copy
 
 from utilities import write_out
 
@@ -12,17 +13,14 @@ def update_equilibrium(full_assets,row,symbol_dict):
     side = row[13]
     # update buy prices if the most recent buy is greater
     if side == 'BUY':
-        print(order_value,price)
         if (int(price) > full_assets[order_value]):
             full_assets[order_value] = (price)
     # update sell prices if the most recent is less than or has not been initialized
     elif side == 'SELL':
-        print(order_value,price)
         if (full_assets[order_value] == 0 or int(price) < full_assets[order_value]):
             full_assets[order_value] = (int(price))
 
 def calculate_equilibriums(directory,file,letters,symbol_dict,order_headers):
-    print(symbol_dict)
     session = 0;
     sides = ['BUY','SELL']
 
@@ -49,10 +47,9 @@ def calculate_equilibriums(directory,file,letters,symbol_dict,order_headers):
 
             if '# orders -- end' in row:
                 order_data = False
-                session_assets[session] = full_assets
+                # copy to full assets to the session
+                session_assets[session] = copy.deepcopy(full_assets)
                 session_rolls[session] = rolls
-                for key, value in session_assets.items():
-                    print(key,session_assets[key])
 
                 # reset unique session objects
                 for key in full_assets:
@@ -66,13 +63,13 @@ def calculate_equilibriums(directory,file,letters,symbol_dict,order_headers):
                 session = row[4]
                 email = row[1]
                 roll = row[18]
-                marketplace = row[3]
 
                 # todo: this will work for robots but what about web. Also how do you account for multiple accounts using different agents.
+                # todo: would also be nice to show the risk aversion
                 agent = str.rstrip(str.split(roll,'0.3.0')[0],' ')
+                # find the location of the first symbol.. that's the start of the paramaters.
                 start_param_loc = str.find(roll,str(' ' + letters[0] + ' '))
                 paramaters = str.lstrip(roll[start_param_loc:],' ')
-
                 #store the roll for the specefic email
                 rolls[email] = agent+' '+paramaters
 
@@ -81,11 +78,9 @@ def calculate_equilibriums(directory,file,letters,symbol_dict,order_headers):
                     equilibrium_prices.append(row)
                     update_equilibrium(full_assets,row,symbol_dict)
 
-    print("equilibrium prices")
-    print(equilibrium_prices)
 
     ##write equilibrium price data and trader info to csv file
-    filepath = os.path.join(directory + os.sep + marketplace + os.sep + 'equilibrium.csv')
+    filepath = os.path.join(directory + os.sep + 'equilibrium.csv')
     for equilibrium_price in equilibrium_prices:
         write_out(filepath,equilibrium_price)
 
@@ -94,12 +89,11 @@ def calculate_equilibriums(directory,file,letters,symbol_dict,order_headers):
         write_out(filepath,[key])
         for innerkey, innervalue in value.items():
             write_out(filepath,[innerkey, innervalue])
-            print([innerkey, innervalue])
         for traderkey, traderroll in session_rolls[key].items():
-            print(traderkey,traderroll)
             write_out(filepath,[traderkey, traderroll])
 
         write_out(filepath,[''])
 
+    return session_rolls
 
 

@@ -6,7 +6,7 @@ def create_dir(dirpath):
         os.mkdir(dirpath)
 
 def write_out(filepath, data):
-    # with open(filepath,mode='a',newline='') as file:
-    #     writer = csv.writer(file, delimiter=',')
-    #     writer.writerow(data)
+    with open(filepath,mode='a',newline='') as file:
+        writer = csv.writer(file, delimiter=',')
+        writer.writerow(data)
     pass

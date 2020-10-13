@@ -3,7 +3,7 @@ import csv
 from utilities import create_dir
 from utilities import write_out
 
-def split_trades(directory,file,letters,symbols,order_headers):
+def split_trades(directory,file,symbols,num_symbols,order_headers):
     order_data = False
     all_orders = {}
 
@@ -11,25 +11,23 @@ def split_trades(directory,file,letters,symbols,order_headers):
     # read file to get assets
     with open(file,mode='r') as csv_file:
         data = csv.reader(csv_file)
-        while len(symbols) < len(letters):
+        while len(num_symbols) < len(symbols):
             row = next(data)
             if row != ['# orders -- begin'] and row != order_headers:
                 try:
-                    symbols[row[6]] = 'tmp'
+                    num_symbols[row[6]] = 'tmp'
                 except:
                     print("please enter the symbols in the order they appear in flexemarkets")
                     exit()
 
 
-    print(symbols)
-    letter = len(symbols) - 1
+    symbol = len(num_symbols) - 1
 
     # map numbers to symbols
-    for key in symbols:
-        symbols[key] = letters[letter]
-        letter -= 1
+    for key in num_symbols:
+        num_symbols[key] = symbols[symbol]
+        symbol -= 1
 
-    print(symbols)
 
     with open(file,mode='r') as csv_file:
         data = csv.reader(csv_file)
@@ -42,9 +40,8 @@ def split_trades(directory,file,letters,symbols,order_headers):
                 continue
 
             if order_data and row != order_headers:
-                marketplace = row[3]
                 session = row[4]
-                market = symbols[row[6]]
+                market = num_symbols[row[6]]
                 order = row[8]
                 original = row[9]
                 supplier = row[10]
@@ -54,12 +51,9 @@ def split_trades(directory,file,letters,symbols,order_headers):
                 # only record limit orders
                 if type == 'LIMIT':
                     if order==original and order==supplier:
-                        ## make marketplace directory
-                        marketplace_dir = directory + os.sep + marketplace
-                        create_dir(marketplace_dir)
 
                         ##make session directory
-                        session_dir = marketplace_dir + os.sep + session
+                        session_dir = directory + os.sep + session
                         create_dir(session_dir)
 
                         filepath = os.path.join(session_dir + os.sep + market+'-'+side+'.csv')
@@ -80,9 +74,8 @@ def split_trades(directory,file,letters,symbols,order_headers):
                 continue
 
             if order_data and row != order_headers:
-                marketplace = row[3]
                 session = row[4]
-                market = symbols[row[6]]
+                market = num_symbols[row[6]]
                 original = row[9]
                 consumer = row[11]
                 type = row[12]
@@ -93,12 +86,8 @@ def split_trades(directory,file,letters,symbols,order_headers):
                     #consumer order has to be limit order
                     if consumer_order[12] == "LIMIT":
 
-                        ## make marketplace directory
-                        marketplace_dir = directory + os.sep + marketplace
-                        create_dir(marketplace_dir)
-
                         ##make session directory
-                        session_dir = marketplace_dir + os.sep + session
+                        session_dir = directory + os.sep + session
                         create_dir(session_dir)
 
                         filepath = os.path.join(session_dir + os.sep + market + '-trades.csv')
@@ -109,5 +98,5 @@ def split_trades(directory,file,letters,symbols,order_headers):
                         else:
                             write_out(filepath,consumer_order)
 
-    return symbols
+    return num_symbols
 
